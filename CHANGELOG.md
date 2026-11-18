@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-17
+
 ### Added
 
 - MCPB bundle for one-click install in Claude Desktop (`cr1000a-mcp-<version>.mcpb`, attached
@@ -17,6 +19,14 @@ All notable changes to this project are documented here. The format follows
 - README section for macOS users on keeping the password in the Keychain behind a launcher
   script, with the limits stated (shell access can still read it; deny rule for Claude Code),
   and a note that plain-text `.env`/config setups are the less secure choice. Suggested in #39.
+
+### Security
+
+- Release workflow: the MCPB bundle is built by a read-only job and handed over as an artifact;
+  the job with `contents: write` only downloads it and creates the release, with no checkout and
+  no build tooling. The `mcpb` CLI is installed from a committed lockfile with
+  `npm ci --ignore-scripts`. A test enforces this. (`npm audit` reports findings in the CLI's
+  own dependencies, none reachable from how the bundle is built; see PR #45.)
 
 ## [0.2.1] - 2026-11-17
 
@@ -100,7 +110,8 @@ First release, published to PyPI.
 - All read paths against a real CR1000A on firmware 3.6.0.5_BD. The write tools were tested
   with fakes only at this release.
 
-[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sohampatwardhan/cr1000a-mcp/releases/tag/v0.1.0
