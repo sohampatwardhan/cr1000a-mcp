@@ -2,7 +2,8 @@
 
 The bundle holds ``manifest.json``, a tiny launcher and a generated ``pyproject.toml``
 that pins ``cr1000a-mcp==<version>`` from PyPI; the host installs it with uv. Packing and
-validation use the official ``mcpb`` CLI (``npx``). Standard library only.
+validation use the official ``mcpb`` CLI, installed from a committed lockfile with
+``npm ci``. Standard library only.
 
     uv run python scripts/build_mcpb.py            # writes dist/cr1000a-mcp-<version>.mcpb
     uv run python scripts/build_mcpb.py --stage-only DIR   # just write the staged files
@@ -21,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MCPB_DIR = ROOT / "mcpb"
-MCPB_CLI = "@anthropic-ai/mcpb@2.1.2"  # pinned so CI and releases are reproducible
+CLI_DIR = ROOT / "scripts" / "mcpb-cli"  # package.json + package-lock.json pin the mcpb CLI
 
 
 def project_version() -> str:
@@ -53,16 +54,26 @@ def stage_bundle(dest: Path, version: str) -> Path:
     return dest
 
 
-def run_mcpb(*args: str) -> None:
-    subprocess.run(["npx", "--yes", MCPB_CLI, *args], check=True)
+def ensure_cli() -> Path:
+    """Install the pinned mcpb CLI from the lockfile (hashes verified, no install scripts)."""
+    subprocess.run(
+        ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=CLI_DIR, check=True
+    )
+    exe = "mcpb.cmd" if sys.platform == "win32" else "mcpb"
+    return CLI_DIR / "node_modules" / ".bin" / exe
+
+
+def run_mcpb(cli: Path, *args: str) -> None:
+    subprocess.run([str(cli), *args], check=True)
 
 
 def build(version: str, out: Path) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
+    cli = ensure_cli()
     with tempfile.TemporaryDirectory(prefix="cr1000a-mcpb-") as tmp:
         stage = stage_bundle(Path(tmp) / "bundle", version)
-        run_mcpb("validate", str(stage / "manifest.json"))
-        run_mcpb("pack", str(stage), str(out))
+        run_mcpb(cli, "validate", str(stage / "manifest.json"))
+        run_mcpb(cli, "pack", str(stage), str(out))
     return out
 
 

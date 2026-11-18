@@ -119,3 +119,60 @@ def test_real_changelog_has_a_section_for_the_current_version() -> None:
     with (ROOT / "pyproject.toml").open("rb") as f:
         version = tomllib.load(f)["project"]["version"]
     assert changelog_section.section(text, version).strip()
+
+
+# --- workflow policy: build tooling must never run next to a write token ------------------
+
+WORKFLOWS = ROOT / ".github" / "workflows"
+RISKY_COMMANDS = ("npx", "npm ", "uv run", "uv sync", "uv build", "pip ", "python")
+
+
+def _load_workflows() -> dict[str, dict[str, Any]]:
+    import yaml
+
+    return {p.name: yaml.safe_load(p.read_text()) for p in WORKFLOWS.glob("*.yml")}
+
+
+def test_write_token_jobs_run_no_checkout_and_no_build_tooling() -> None:
+    offenders = []
+    for name, wf in _load_workflows().items():
+        for job_name, job in wf["jobs"].items():
+            perms = job.get("permissions") or {}
+            if perms.get("contents") != "write":
+                continue
+            for step in job["steps"]:
+                if str(step.get("uses", "")).startswith("actions/checkout"):
+                    offenders.append(f"{name}:{job_name} checks out code")
+                run = str(step.get("run", ""))
+                for bad in RISKY_COMMANDS:
+                    if bad in run:
+                        offenders.append(f"{name}:{job_name} runs {bad!r}")
+    assert offenders == []
+
+
+def test_mcpb_build_jobs_checkout_without_persisting_credentials() -> None:
+    for name, wf in _load_workflows().items():
+        job = wf["jobs"].get("mcpb")
+        if not job:
+            continue
+        for step in job["steps"]:
+            if str(step.get("uses", "")).startswith("actions/checkout"):
+                assert step["with"]["persist-credentials"] is False, name
+
+
+def test_release_bundle_job_is_read_only_and_feeds_the_write_job() -> None:
+    release = _load_workflows()["release.yml"]["jobs"]
+    assert release["mcpb"]["permissions"] == {"contents": "read"}
+    assert release["github-release"]["needs"] == "mcpb"
+
+
+def test_mcpb_cli_is_pinned_exactly_and_locked_with_hashes() -> None:
+    cli_dir = ROOT / "scripts" / "mcpb-cli"
+    pkg = json.loads((cli_dir / "package.json").read_text())
+    pinned = pkg["dependencies"]["@anthropic-ai/mcpb"]
+    assert pinned[0].isdigit(), f"must be an exact version, got {pinned}"
+    lock = json.loads((cli_dir / "package-lock.json").read_text())["packages"]
+    entry = lock["node_modules/@anthropic-ai/mcpb"]
+    assert entry["version"] == pinned and entry["integrity"].startswith("sha512-")
+    assert all("integrity" in v for k, v in lock.items() if k)  # every dependency is hash-pinned
+    assert not any(v.get("hasInstallScript") for v in lock.values())
