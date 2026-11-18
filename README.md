@@ -65,11 +65,24 @@ claude mcp add cr1000a \
 }
 ```
 
+## Live check
+
+`cr1000a-mcp check` logs in once, runs every read-only call against your router and prints a
+JSON report of response **shapes** (types, counts, key names; never values), so it is safe to
+paste into an issue. It never calls a write endpoint.
+
+```bash
+uv run cr1000a-mcp check
+```
+
+Exit code is 0 when every check passes. Log out of the router's web UI first, since the
+router may allow only one session.
+
 ## Caveats
 
 - Unofficial: firmware updates can change the endpoints.
 - Logging in may end an active web-UI session on the router.
-- Verified against a fake client only so far; live validation is tracked in the issues.
+- Tool output is tested with fakes; run `cr1000a-mcp check` to validate against your own firmware.
 
 ## Development
 
