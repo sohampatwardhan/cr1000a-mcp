@@ -374,13 +374,28 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["check"],
+        choices=["check", "write-test"],
         help="'check' runs every read-only call against the router and prints a shape report; "
+        "'write-test' adds and removes a throwaway DNS record to prove the write tools work; "
         "with no command the MCP server starts on stdio",
     )
+    parser.add_argument(
+        "--yes", action="store_true", help="write-test: skip the confirmation prompt"
+    )
+    parser.add_argument(
+        "--port-forward",
+        action="store_true",
+        help="write-test: also add and remove a throwaway port forward",
+    )
     args = parser.parse_args(argv)
+    if args.command != "write-test" and (args.yes or args.port_forward):
+        parser.error("--yes and --port-forward only apply to the write-test command")
     if args.command == "check":
         from cr1000a_mcp.check import main as check_main
 
         sys.exit(check_main())
+    if args.command == "write-test":
+        from cr1000a_mcp.writetest import main as write_test_main
+
+        sys.exit(write_test_main(yes=args.yes, port_forward=args.port_forward))
     build_server().run()
