@@ -3,6 +3,17 @@ name = "cr1000a-mcp"
 version = "0.1.0"
 description = "MCP server for the Verizon CR1000A (Fios) router"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["mcp", "verizon", "fios", "cr1000a", "router"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Networking",
+]
 authors = [
     { name = "Soham Patwardhan", email = "39222082+sohampatwardhan@users.noreply.github.com" }
 ]
@@ -12,6 +23,10 @@ dependencies = [
     "python-dotenv>=1.2.4",
     "verizon-router-client>=0.4.0,<0.5",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sohampatwardhan/cr1000a-mcp"
+Issues = "https://github.com/sohampatwardhan/cr1000a-mcp/issues"
 
 [project.scripts]
 cr1000a-mcp = "cr1000a_mcp:main"

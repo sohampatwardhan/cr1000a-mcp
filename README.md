@@ -43,6 +43,17 @@ Set via environment variables (or a `.env` file in the working directory):
 The router's certificate is bound to `mynetworksettings.com`; the client sets SNI/Host
 automatically when you connect by IP and bundles the Verizon root CA.
 
+## Install
+
+Once published to PyPI (see Releasing), run it without cloning:
+
+```bash
+uvx cr1000a-mcp          # start the MCP server
+uvx cr1000a-mcp check    # live read-only validation
+```
+
+Until then, use `uv run --directory /path/to/cr1000a-mcp cr1000a-mcp` as shown below.
+
 ## Use with Claude Code
 
 ```bash
@@ -83,6 +94,23 @@ router may allow only one session.
 - Unofficial: firmware updates can change the endpoints.
 - Logging in may end an active web-UI session on the router.
 - Tool output is tested with fakes; run `cr1000a-mcp check` to validate against your own firmware.
+
+## Releasing
+
+Publishing uses PyPI trusted publishing (no API token). One-time setup, by the repo owner:
+
+1. On PyPI, add a *pending publisher* for project `cr1000a-mcp`: owner `sohampatwardhan`,
+   repository `cr1000a-mcp`, workflow `release.yml`, environment `pypi`.
+2. In GitHub, create an environment named `pypi` (optionally require a reviewer).
+
+To release: bump `version` in `pyproject.toml`, merge, then tag and push:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The workflow checks the tag matches the package version, runs lint and tests, builds, and
+publishes.
 
 ## Development
 
