@@ -65,6 +65,14 @@ Tests never touch a real router. Tool tests use in-memory fakes through FastMCP'
   redacted by `get_router_page`. If you find a field that leaks, open an issue describing the
   field **name**, not its value.
 
+## The MCPB bundle
+
+`mcpb/` holds the manifest and launcher for the Claude Desktop bundle; `scripts/build_mcpb.py`
+stages it, pins `cr1000a-mcp==<version>` from PyPI in a generated `pyproject.toml`, and packs
+it with the official `mcpb` CLI. When you add, rename or remove a tool, update the `tools`
+list in `mcpb/manifest.json`: `tests/test_mcpb.py` compares it with the real server.
+Never give the password field a default.
+
 ## Testing against a real router
 
 Only the maintainers' router is covered by the recorded fixtures (firmware **3.6.0.5_BD**). If
@@ -85,8 +93,9 @@ extend `tests/test_live_contract.py`.
 Publishing uses PyPI trusted publishing (no API token); the publisher is registered for this
 repository's `release.yml` workflow and the `pypi` environment.
 
-1. Bump `version` in `pyproject.toml` and move the **Unreleased** entries in `CHANGELOG.md`
-   under the new version heading with its date; merge the PR.
+1. Bump `version` in `pyproject.toml` **and** `mcpb/manifest.json` (a test fails if they
+   differ) and move the **Unreleased** entries in `CHANGELOG.md` under the new version heading
+   with its date; merge the PR.
 2. Tag and push:
 
    ```bash
@@ -94,7 +103,10 @@ repository's `release.yml` workflow and the `pypi` environment.
    ```
 
 The workflow checks that the tag matches the package version, runs lint and tests, builds, and
-publishes. A published version can never be re-uploaded, so fixes ship as a new version.
+publishes to PyPI. Then it builds the MCPB bundle and attaches it to a GitHub Release, using that
+version's changelog section as the notes. Before tagging, install the bundle from the CI
+`mcpb` artifact (or `uv run python scripts/build_mcpb.py`) into Claude Desktop once: CI can
+validate and launch the bundle's command but cannot click through Claude Desktop. A published version can never be re-uploaded, so fixes ship as a new version.
 Third-party actions in the release workflow are pinned to commit SHAs; Dependabot proposes
 updates, which should be reviewed because that job holds the publish permission.
 

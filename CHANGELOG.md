@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- MCPB bundle for one-click install in Claude Desktop (`cr1000a-mcp-<version>.mcpb`, attached
+  to each GitHub Release). It asks for the router IP, the Network Settings Password (a
+  sensitive field) and an off-by-default "Allow changes" switch, and pins the matching PyPI
+  release. Built by `scripts/build_mcpb.py`; CI builds and validates it on every PR, and a test
+  keeps its tool list and version in step with the server.
+- Release workflow creates the GitHub Release with the changelog section as notes.
 - README section for macOS users on keeping the password in the Keychain behind a launcher
   script, with the limits stated (shell access can still read it; deny rule for Claude Code),
   and a note that plain-text `.env`/config setups are the less secure choice. Suggested in #39.

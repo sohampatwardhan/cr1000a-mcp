@@ -46,3 +46,28 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  github-release:
+    # After PyPI has the package (the bundle installs it from there), publish the MCPB
+    # bundle on a GitHub Release with this version's changelog section as the notes.
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and attach the bundle
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - name: Build the MCPB bundle
+        run: uv run --frozen python scripts/build_mcpb.py
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          {
+            python3 scripts/changelog_section.py "$version"
+            printf '\n**Claude Desktop:** download `cr1000a-mcp-%s.mcpb`, open it, and enter your router IP and Network Settings Password. **Everyone else:** `uvx cr1000a-mcp`.\n' "$version"
+          } > notes.md
+          gh release create "$TAG" "dist/cr1000a-mcp-${version}.mcpb" \
+            --title "$TAG" --notes-file notes.md --verify-tag
