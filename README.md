@@ -41,7 +41,20 @@ claude mcp add cr1000a \
   -- uvx cr1000a-mcp
 ```
 
-**Claude Desktop** (`claude_desktop_config.json`)
+**Claude Desktop, one-click (MCPB bundle)**
+
+1. Download `cr1000a-mcp-<version>.mcpb` from the
+   [latest release](https://github.com/sohampatwardhan/cr1000a-mcp/releases/latest).
+2. Open the file (or Claude Desktop > Settings > Extensions > Advanced settings > Install
+   Extension) and click Install.
+3. Enter your router IP (the default is usually right) and the Network Settings Password.
+   The password field is marked sensitive, so Claude Desktop masks it and stores it securely
+   (per the MCPB spec) instead of in a plain-text config. "Allow changes" is off by default.
+
+The bundle is tiny: on first start `uv` downloads the pinned `cr1000a-mcp` release from PyPI,
+so it needs network access and [`uv`](https://docs.astral.sh/uv/) installed.
+
+**Claude Desktop, manual config** (`claude_desktop_config.json`)
 
 ```json
 {

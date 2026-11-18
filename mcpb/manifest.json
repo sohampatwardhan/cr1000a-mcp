@@ -1,0 +1,82 @@
+{
+  "manifest_version": "0.4",
+  "name": "cr1000a-mcp",
+  "display_name": "Verizon CR1000A Router",
+  "version": "0.2.1",
+  "description": "See who is on your Verizon CR1000A (Fios) router, its WAN status, DNS records and port forwards. Optional write tools.",
+  "long_description": "Talks to your CR1000A over your local network through the router's own web interface. Read tools: router status, known devices, bandwidth and per-device traffic, DNS records, port forwards, IPv6 pinholes and a few data pages. Write tools (add or remove DNS records, port forwards and IPv6 pinholes) are off until you switch on \"Allow changes\". Secret-looking fields from the router are redacted. Unofficial: it uses the router's undocumented web API, verified on firmware 3.6.0.5_BD.",
+  "author": {
+    "name": "Soham Patwardhan",
+    "url": "https://github.com/sohampatwardhan"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sohampatwardhan/cr1000a-mcp"
+  },
+  "homepage": "https://github.com/sohampatwardhan/cr1000a-mcp",
+  "documentation": "https://github.com/sohampatwardhan/cr1000a-mcp#readme",
+  "support": "https://github.com/sohampatwardhan/cr1000a-mcp/issues",
+  "license": "MIT",
+  "keywords": ["verizon", "fios", "cr1000a", "router", "network"],
+  "server": {
+    "type": "uv",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "server/main.py"],
+      "env": {
+        "ROUTER_IP": "${user_config.router_ip}",
+        "NETWORK_SETTINGS_PASSWORD": "${user_config.network_settings_password}",
+        "CR1000A_MCP_ALLOW_WRITE": "${user_config.allow_changes}"
+      }
+    }
+  },
+  "tools": [
+    {"name": "router_status", "description": "Uptime, WAN IPv4/IPv6 and WAN DNS servers"},
+    {"name": "list_devices", "description": "Devices the router knows about, with filtering and a short default field set"},
+    {"name": "get_bandwidth_history", "description": "Recent WAN throughput series"},
+    {"name": "get_host_traffic", "description": "Per-device traffic counters by period"},
+    {"name": "list_dns_records", "description": "Local IPv4 DNS records"},
+    {"name": "list_dns_records_v6", "description": "Local IPv6 DNS records"},
+    {"name": "list_port_forwards", "description": "Port-forwarding rules (user and UPnP)"},
+    {"name": "list_ipv6_pinholes", "description": "IPv6 pinhole (inbound firewall) rules"},
+    {"name": "get_router_page", "description": "One allowlisted data page (arp, net_connections, log, upnp, firmware); secrets redacted"},
+    {"name": "add_dns_record", "description": "Add a local IPv4 DNS record (needs Allow changes)"},
+    {"name": "remove_dns_record", "description": "Remove a local IPv4 DNS record (needs Allow changes)"},
+    {"name": "remove_dns_record_v6", "description": "Remove a local IPv6 DNS record (needs Allow changes)"},
+    {"name": "add_port_forward", "description": "Add a port forward, which opens a port to the internet (needs Allow changes)"},
+    {"name": "remove_port_forward", "description": "Remove a port forward (needs Allow changes)"},
+    {"name": "add_ipv6_pinhole", "description": "Open an inbound IPv6 pinhole (needs Allow changes)"},
+    {"name": "remove_ipv6_pinhole", "description": "Remove an IPv6 pinhole (needs Allow changes)"}
+  ],
+  "tools_generated": false,
+  "user_config": {
+    "router_ip": {
+      "type": "string",
+      "title": "Router IP address",
+      "description": "Address of your CR1000A on your home network. The default is correct for most Verizon routers.",
+      "default": "192.168.1.1",
+      "required": true
+    },
+    "network_settings_password": {
+      "type": "string",
+      "title": "Network Settings Password",
+      "description": "Printed on the sticker on the back of the router (label: Network Settings Password).",
+      "sensitive": true,
+      "required": true
+    },
+    "allow_changes": {
+      "type": "boolean",
+      "title": "Allow changes",
+      "description": "Switch on to let the assistant add or remove DNS records, port forwards and IPv6 pinholes. Leave off for read-only access.",
+      "default": false,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "linux", "win32"],
+    "runtimes": {
+      "python": ">=3.12"
+    }
+  }
+}
