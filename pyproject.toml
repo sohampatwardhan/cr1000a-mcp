@@ -10,7 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastmcp>=4.2.1",
     "python-dotenv>=1.2.4",
-    "verizon-router-client>=0.4.0",
+    "verizon-router-client>=0.4.0,<0.5",
 ]
 
 [project.scripts]
