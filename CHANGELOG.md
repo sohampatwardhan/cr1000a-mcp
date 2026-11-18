@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-17
+
 ### Added
 
 - `cr1000a-mcp write-test`: adds then removes a throwaway DNS record (and, with
@@ -17,7 +19,15 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - README rewritten for end users: `uvx` install, current client configs, full tool and
-  configuration reference. Developer and release material moved to `CONTRIBUTING.md`.
+  configuration reference. Developer and release material moved to `CONTRIBUTING.md`. This is
+  now the description shown on PyPI (the 0.1.0 page showed an outdated README).
+- README links to repository files are absolute so they work on PyPI.
+- PyPI sidebar gains Changelog and Documentation links.
+
+### Notes
+
+- The write tools (DNS, port forwards, IPv6 pinholes) are still tested with fakes only in CI;
+  run `cr1000a-mcp write-test` to verify them on your router.
 
 ## [0.1.0] - 2026-11-17
 
@@ -64,5 +74,6 @@ First release, published to PyPI.
 - All read paths against a real CR1000A on firmware 3.6.0.5_BD. The write tools were tested
   with fakes only at this release.
 
-[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sohampatwardhan/cr1000a-mcp/releases/tag/v0.1.0

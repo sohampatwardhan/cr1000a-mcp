@@ -8,7 +8,7 @@ Verizon publishes no API for this router. The server talks to the router's undoc
 web-UI API (`cgi/*.js` endpoints behind a `sysauth` cookie login) through the community
 [`verizon-router-client`](https://pypi.org/project/verizon-router-client/) library. Read
 paths were validated on a real CR1000A running firmware **3.6.0.5_BD**; see
-[`docs/endpoints.md`](docs/endpoints.md) for every endpoint and verified response shape.
+[`docs/endpoints.md`](https://github.com/sohampatwardhan/cr1000a-mcp/blob/main/docs/endpoints.md) for every endpoint and verified response shape.
 
 ## Quick start
 
@@ -136,9 +136,9 @@ only one admin session.
 ## Changelog and contributing
 
 Bug reports, firmware compatibility reports and pull requests are welcome. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the issue-first workflow, how to
+[CONTRIBUTING.md](https://github.com/sohampatwardhan/cr1000a-mcp/blob/main/CONTRIBUTING.md) for development setup, the issue-first workflow, how to
 run the live checks, and how releases work. Release notes are in
-[CHANGELOG.md](CHANGELOG.md).
+[CHANGELOG.md](https://github.com/sohampatwardhan/cr1000a-mcp/blob/main/CHANGELOG.md).
 
 ## License
 
