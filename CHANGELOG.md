@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Verified
+
+- `add_dns_record` and `remove_dns_record` (IPv4) passed the live `cr1000a-mcp write-test` on a
+  real CR1000A running firmware 3.6.0.5_BD (2026-11-17): the record appeared in
+  `list_dns_records`, was removed, and the router was left clean. Port forwards, IPv6 DNS
+  removal and IPv6 pinholes are not yet verified live.
+
 ## [0.2.0] - 2026-11-17
 
 ### Added

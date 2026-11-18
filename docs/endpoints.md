@@ -93,3 +93,14 @@ names only (no values). Counts are from one household and will vary. Recorded na
   `ui_model`, `activity`, `port`, `is_dhcp`, `time_last_active`); use `fields=[...]` for
   others (for example `user_agent`, `os`, `time_first_seen`) or `verbose=True` for all.
 - `net_connections` is large (219 settings) even with the list cap.
+
+## Write paths: verification status
+
+Verified with `cr1000a-mcp write-test` on a real CR1000A, firmware 3.6.0.5_BD, 2026-11-17.
+
+| Tool | Endpoint | Status |
+| --- | --- | --- |
+| `add_dns_record`, `remove_dns_record` | `apply_abstract.cgi` (`dnsmasq_reload`) | verified live |
+| `add_port_forward`, `remove_port_forward` | `db.cgi` (`forwardrule`) | not verified; covered by `write-test --port-forward` |
+| `remove_dns_record_v6` | `apply_abstract.cgi` | not verified (the client cannot add IPv6 records, so there is no round trip to test) |
+| `add_ipv6_pinhole`, `remove_ipv6_pinhole` | `db.cgi` (`pinholerule`) | not verified; no live test yet |
