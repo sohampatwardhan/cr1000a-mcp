@@ -93,7 +93,7 @@ router may allow only one session.
 
 - Unofficial: firmware updates can change the endpoints.
 - Logging in may end an active web-UI session on the router.
-- Tool output is tested with fakes; run `cr1000a-mcp check` to validate against your own firmware.
+- All read paths were validated against a real CR1000A (see `docs/endpoints.md`); write tools are tested with fakes only. Run `cr1000a-mcp check` to validate your own firmware.
 
 ## Releasing
 
