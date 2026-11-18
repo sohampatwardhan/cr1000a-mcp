@@ -259,7 +259,8 @@ def build_server(
     def get_router_page(page: PageName, limit: int = DEFAULT_ITEM_LIMIT) -> dict[str, Any]:
         """Read one allowlisted router data page: arp (ARP table), net_connections,
         log, upnp or firmware (version info). Long lists are truncated to ``limit``.
-        Response shapes are firmware-specific and not yet documented."""
+        Fields that look like secrets (passwords, keys, tokens) are returned as
+        "[redacted]". Response shapes are firmware-specific; see docs/endpoints.md."""
         return conn.call(lambda c: fetch_page(c, page, limit=limit))
 
     if not write:

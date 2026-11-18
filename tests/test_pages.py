@@ -8,7 +8,7 @@ from fastmcp.exceptions import ToolError
 from verizon_router_client.cr1000a import VerizonRouterClient
 
 from cr1000a_mcp import RouterConnection, build_server
-from cr1000a_mcp.pages import SAFE_PAGES, cap, fetch_page
+from cr1000a_mcp.pages import REDACTED, SAFE_PAGES, cap, fetch_page, is_secret_key, redact
 
 SCRIPT = (
     'addROD("arp_table", [{"ip":"192.168.1.10","mac":"aa:bb"},'
@@ -81,3 +81,81 @@ async def test_tool_registered_and_calls_client() -> None:
             await c.call_tool("get_router_page", {"page": "lan_restore"})
     assert "get_router_page" in names
     assert result.data["settings"]["fw_version"] == "1.2.3"
+
+
+# Names seen on a real CR1000A (firmware 3.6.0.5_BD) in net_connections.settings.
+LIVE_SECRET_FIELDS = ["moca_password0", "moca_password1", "moca_manual_pw1"]
+LIVE_HARMLESS_FIELDS = [
+    "moca_pw_enable0",
+    "moca_pw_enable1",
+    "dhcp_enable0",
+    "wan_ip4_dns",
+    "lan_ip",
+]
+
+
+@pytest.mark.parametrize("name", LIVE_SECRET_FIELDS)
+def test_live_secret_field_names_are_detected(name: str) -> None:
+    assert is_secret_key(name)
+
+
+@pytest.mark.parametrize("name", LIVE_HARMLESS_FIELDS)
+def test_live_harmless_field_names_are_not_redacted(name: str) -> None:
+    assert not is_secret_key(name)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "wifi_password",
+        "admin_passwd",
+        "wpa_passphrase",
+        "psk",
+        "shared_secret",
+        "auth_token",
+        "api_key",
+        "apiKey",
+        "ppp_pass",
+        "x_pw",
+        "pw",
+    ],
+)
+def test_other_secret_style_names_are_detected(name: str) -> None:
+    assert is_secret_key(name)
+
+
+def test_redact_nested_values_and_keeps_keys() -> None:
+    data = {
+        "a": {"moca_password0": "hunter2", "ok": "keep"},
+        "rows": [{"wifi_password": "p4ss", "n": 1}],
+        "moca_password1": "",
+        "token": None,
+    }
+    assert redact(data) == {
+        "a": {"moca_password0": REDACTED, "ok": "keep"},
+        "rows": [{"wifi_password": REDACTED, "n": 1}],
+        "moca_password1": "",
+        "token": None,
+    }
+
+
+def test_redact_hides_a_secret_even_when_its_value_is_nested() -> None:
+    assert redact({"password": {"value": "x"}}) == {"password": REDACTED}
+
+
+def test_fetch_page_never_returns_secret_values() -> None:
+    script = (
+        'addCfg("moca_password0", "enc1", "hunter2-secret");\n'
+        'addCfg("moca_manual_pw1", "enc2", "another-secret");\n'
+        'addCfg("moca_pw_enable0", "enc3", "1");\n'
+        'addROD("wifi_password", "rod-secret");\n'
+    )
+    out = fetch_page(PageClient(script), "net_connections")
+    dumped = repr(out)
+    assert "hunter2-secret" not in dumped
+    assert "another-secret" not in dumped
+    assert "rod-secret" not in dumped
+    assert out["settings"]["moca_password0"] == REDACTED
+    assert out["settings"]["moca_manual_pw1"] == REDACTED
+    assert out["settings"]["moca_pw_enable0"] == "1"
+    assert out["data"]["wifi_password"] == REDACTED
