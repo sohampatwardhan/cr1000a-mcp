@@ -1,0 +1,29 @@
+{
+  "_comment": "Field names and versions recorded from a live `cr1000a-mcp check` on a real CR1000A. Names only; no device values, addresses or credentials.",
+  "firmware": {"router_version": "3.6.0.5_BD", "router_date": "May 13, 2026 02:05:15"},
+  "known_device_record_fields": [
+    "activity", "activity_ip", "activity_ipv6", "activity_ipv6_ll", "bridge_port", "dev_class",
+    "device", "device_firmware", "device_manufacturer", "device_model", "device_os",
+    "device_product", "device_sub_model", "dhcpv6_rq_list", "dhcpv6_vendor_class", "display",
+    "hostname", "icon_id", "ip", "ipv6", "ipv6_ll", "is_dhcp", "location", "mac", "mac_vendor",
+    "mobility", "name", "os", "port", "pre_port", "request_list", "suggested_name",
+    "time_first_seen", "time_last_active", "ui_manufacturer", "ui_model", "ui_os", "ui_type",
+    "uptime", "user_agent", "vendor_id"
+  ],
+  "port_forward_rule_fields": [
+    "id", "enable", "name", "privateIP", "port_rule_id", "forward_port", "schedule_rule_id",
+    "snat_enable", "snat_id"
+  ],
+  "net_connections_secret_named_settings": ["moca_password0", "moca_password1", "moca_manual_pw1"],
+  "net_connections_data_keys": [
+    "eth_status_list", "get_interface_rate", "get_ipv6_link_local_addr", "get_moca_lan_coordinator",
+    "get_moca_lan_devcie", "get_moca_state", "get_wlan_used_5g", "ipv6_active_rules",
+    "known_device_list", "rTable", "routes6_Table", "wan_lease_time", "wan_phy_status",
+    "wan_state", "wifi_bh"
+  ],
+  "log_page_settings": [
+    "log_all", "log_block_frag", "log_conn_state", "log_defrag_error", "log_echo_chargen",
+    "log_icmp_flood", "log_icmp_mcst", "log_icmp_redirect", "log_illegal_packet", "log_in",
+    "log_mcast_bcast", "log_out", "log_remote_admin", "log_syn", "log_udp_flood", "log_winnuke"
+  ]
+}

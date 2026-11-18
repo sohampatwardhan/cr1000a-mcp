@@ -206,15 +206,24 @@ def build_server(
 
     @mcp.tool(annotations=READ)
     def list_devices(
-        name_contains: str = "", limit: int = DEFAULT_LIMIT, verbose: bool = False
+        name_contains: str = "",
+        limit: int = DEFAULT_LIMIT,
+        verbose: bool = False,
+        fields: list[str] | None = None,
     ) -> dict[str, Any]:
         """Devices the router knows about (connected and previously seen).
 
         ``name_contains`` filters case-insensitively on any field (hostname, IP,
-        MAC). Results are capped at ``limit``; ``verbose`` returns raw records.
+        MAC). Results are capped at ``limit``. By default each device keeps a short
+        field set (name, hostname, ip, ipv6, mac, mac_vendor, ui_type, ui_manufacturer,
+        ui_model, activity, port, is_dhcp, time_last_active); pass ``fields`` to choose
+        others (the router returns 41, for example ``user_agent``, ``os``,
+        ``time_first_seen``) or ``verbose`` for everything.
         """
         devices = conn.call(lambda c: c.fetch_known_devices())
-        return compact_devices(devices, name_contains=name_contains, limit=limit, verbose=verbose)
+        return compact_devices(
+            devices, name_contains=name_contains, limit=limit, verbose=verbose, fields=fields
+        )
 
     @mcp.tool(annotations=READ)
     def get_bandwidth_history() -> list[list[int]]:

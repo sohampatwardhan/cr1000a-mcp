@@ -13,14 +13,14 @@ Read-only (always available):
 | Tool | Returns |
 | --- | --- |
 | `router_status` | uptime, WAN IPv4/IPv6, WAN DNS servers |
-| `list_devices` | known devices |
+| `list_devices` | known devices (13-field default; `fields`, `name_contains`, `limit`, `verbose`) |
 | `get_bandwidth_history` | recent WAN throughput series |
 | `get_host_traffic` | per-device traffic counters by period |
 | `list_dns_records` | local IPv4 DNS records |
 | `list_port_forwards` | port-forwarding rules |
 | `list_dns_records_v6` | local IPv6 DNS records |
 | `list_ipv6_pinholes` | IPv6 pinhole rules |
-| `get_router_page` | one allowlisted data page: `arp`, `net_connections`, `log`, `upnp`, `firmware` |
+| `get_router_page` | one allowlisted data page: `arp`, `net_connections`, `log`, `upnp`, `firmware`; secret-named fields are redacted |
 
 Write tools, registered only when `CR1000A_MCP_ALLOW_WRITE=1`:
 `add_dns_record`, `remove_dns_record`, `remove_dns_record_v6`, `add_port_forward`,
@@ -94,7 +94,7 @@ router may allow only one session.
 
 - Unofficial: firmware updates can change the endpoints.
 - Logging in may end an active web-UI session on the router.
-- All read paths were validated against a real CR1000A (see `docs/endpoints.md`); write tools are tested with fakes only. Run `cr1000a-mcp check` to validate your own firmware.
+- All read paths were validated against a real CR1000A on firmware 3.6.0.5_BD (see `docs/endpoints.md`); write tools are tested with fakes only. Run `cr1000a-mcp check` to validate your own firmware.
 
 ## Releasing
 
