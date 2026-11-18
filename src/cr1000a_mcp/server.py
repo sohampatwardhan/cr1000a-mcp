@@ -21,6 +21,7 @@ import requests
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
+from cr1000a_mcp.pages import DEFAULT_ITEM_LIMIT, PageName, fetch_page
 from cr1000a_mcp.shape import DEFAULT_LIMIT, compact_devices, compact_port_forwards
 
 T = TypeVar("T")
@@ -171,6 +172,13 @@ def build_server(
         """
         settings = conn.call(lambda c: c.get_port_forwarding_settings())
         return compact_port_forwards(settings, include_readonly=include_readonly)
+
+    @mcp.tool(annotations=READ)
+    def get_router_page(page: PageName, limit: int = DEFAULT_ITEM_LIMIT) -> dict[str, Any]:
+        """Read one allowlisted router data page: arp (ARP table), net_connections,
+        log, upnp or firmware (version info). Long lists are truncated to ``limit``.
+        Response shapes are firmware-specific and not yet documented."""
+        return conn.call(lambda c: fetch_page(c, page, limit=limit))
 
     if not write:
         return mcp

@@ -17,6 +17,7 @@ READ_TOOLS = {
     "get_host_traffic",
     "list_dns_records",
     "list_port_forwards",
+    "get_router_page",
 }
 WRITE_TOOLS = {
     "add_dns_record",
