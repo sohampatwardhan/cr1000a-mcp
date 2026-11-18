@@ -8,6 +8,7 @@ device (upload, restore, clear-log, diagnostics, engineering pages) is not.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal, get_args
 
 PageName = Literal["arp", "net_connections", "log", "upnp", "firmware"]
@@ -15,6 +16,40 @@ SAFE_PAGES: tuple[str, ...] = get_args(PageName)
 
 DEFAULT_ITEM_LIMIT = 100
 MAX_STRING = 2000
+
+
+REDACTED = "[redacted]"
+# Field names that look like secrets: password, passwd, passphrase, psk, secret,
+# token, api key, a bare "pass", or a trailing "_pw"/"_pw<n>" (for example the
+# MoCA fields moca_password0 and moca_manual_pw1). Enable flags such as
+# moca_pw_enable0 do not match.
+_SECRET_KEY = re.compile(
+    r"(pass(word|wd|phrase)|psk|secret|token|api_?key)|((^|_)pass$)|((^|_)pw\d*$)",
+    re.IGNORECASE,
+)
+
+
+def is_secret_key(name: Any) -> bool:
+    return bool(_SECRET_KEY.search(str(name)))
+
+
+def redact(value: Any) -> Any:
+    """Replace the value of any secret-named field, at any depth.
+
+    Empty values are left alone (nothing to leak). The key is kept so callers can
+    see that the field exists.
+    """
+    if isinstance(value, dict):
+        out: dict[Any, Any] = {}
+        for key, item in value.items():
+            if is_secret_key(key) and item not in ("", None):
+                out[key] = REDACTED
+            else:
+                out[key] = redact(item)
+        return out
+    if isinstance(value, list):
+        return [redact(item) for item in value]
+    return value
 
 
 def cap(value: Any, limit: int = DEFAULT_ITEM_LIMIT, max_str: int = MAX_STRING) -> Any:
@@ -48,6 +83,6 @@ def fetch_page(client: Any, page: str, *, limit: int = DEFAULT_ITEM_LIMIT) -> di
         raise RuntimeError(f"No addROD/addCfg entries found in /cgi/cgi_{page}.js")
     return {
         "page": page,
-        "data": cap(rod, limit),
-        "settings": cap({key: entry.val for key, entry in cfg.items()}, limit),
+        "data": cap(redact(rod), limit),
+        "settings": cap(redact({key: entry.val for key, entry in cfg.items()}), limit),
     }

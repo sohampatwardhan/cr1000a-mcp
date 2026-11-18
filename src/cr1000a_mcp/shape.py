@@ -6,9 +6,28 @@ The router returns large, firmware-specific blobs. These helpers are shape-based
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 DEFAULT_LIMIT = 50
+
+# Fields kept per device by default. Chosen from the 41 fields a real CR1000A
+# (firmware 3.6.0.5_BD) returns per device; pass ``fields`` or ``verbose`` for more.
+DEFAULT_DEVICE_FIELDS: tuple[str, ...] = (
+    "name",
+    "hostname",
+    "ip",
+    "ipv6",
+    "mac",
+    "mac_vendor",
+    "ui_type",
+    "ui_manufacturer",
+    "ui_model",
+    "activity",
+    "port",
+    "is_dhcp",
+    "time_last_active",
+)
 
 
 def _is_scalar(value: Any) -> bool:
@@ -29,17 +48,31 @@ def _matches(record: Any, needle: str) -> bool:
     return needle in str(record).lower()
 
 
+def select_fields(record: Any, fields: Sequence[str]) -> Any:
+    """Keep only ``fields`` (when present and non-empty).
+
+    If none of the wanted fields exist (for example after a firmware change
+    renames them) fall back to every scalar field rather than returning nothing.
+    """
+    if not isinstance(record, dict):
+        return record
+    picked = {k: record[k] for k in fields if k in record and record[k] not in ("", None)}
+    return picked or compact_record(record)
+
+
 def compact_devices(
     devices: list[Any],
     *,
     name_contains: str = "",
     limit: int = DEFAULT_LIMIT,
     verbose: bool = False,
+    fields: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Filter, trim and cap a device list.
 
     ``name_contains`` matches case-insensitively against any scalar field
-    (hostname, IP, MAC, ...). ``verbose`` keeps the raw records.
+    (hostname, IP, MAC, ...). Records are cut to ``fields`` (default
+    ``DEFAULT_DEVICE_FIELDS``); ``verbose`` keeps the raw records.
     """
     if limit < 1:
         raise ValueError("limit must be at least 1")
@@ -50,7 +83,9 @@ def compact_devices(
         "matched": len(matched),
         "returned": len(page),
         "truncated": len(matched) > len(page),
-        "devices": page if verbose else [compact_record(d) for d in page],
+        "devices": page
+        if verbose
+        else [select_fields(d, fields or DEFAULT_DEVICE_FIELDS) for d in page],
     }
 
 

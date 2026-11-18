@@ -57,31 +57,39 @@ rejects any other name before making a request.
 
 ## Verified shapes
 
-From a live `cr1000a-mcp check` on 2026-11-17: **13 of 13 read checks passed** against a
-CR1000A. The report contains shapes only (no values). Counts are from one household and
-will vary.
+From live `cr1000a-mcp check` runs on 2026-11-17: **13 of 13 read checks passed** against a
+CR1000A running firmware **3.6.0.5_BD (May 13, 2026)**. Reports contain shapes and field
+names only (no values). Counts are from one household and will vary. Recorded names live in
+`tests/fixtures/live_cr1000a_3.6.0.5_BD.json` and are checked by `tests/test_live_contract.py`.
 
 | Check | Shape |
 | --- | --- |
 | `status` (`fetch_status`) | dict of 15 keys, each a list of lists of strings (the `addROD` payload; uptime and WAN fields are read from it by the client) |
-| `known_devices` (`owl`) | list of records; 41 fields per record (names recorded by the next `check` run) |
+| `known_devices` (`owl`) | list of 76 records, 41 fields each: `activity`, `activity_ip`, `activity_ipv6`, `activity_ipv6_ll`, `bridge_port`, `dev_class`, `device`, `device_firmware`, `device_manufacturer`, `device_model`, `device_os`, `device_product`, `device_sub_model`, `dhcpv6_rq_list`, `dhcpv6_vendor_class`, `display`, `hostname`, `icon_id`, `ip`, `ipv6`, `ipv6_ll`, `is_dhcp`, `location`, `mac`, `mac_vendor`, `mobility`, `name`, `os`, `port`, `pre_port`, `request_list`, `suggested_name`, `time_first_seen`, `time_last_active`, `ui_manufacturer`, `ui_model`, `ui_os`, `ui_type`, `uptime`, `user_agent`, `vendor_id` |
 | `bandwidth_history` | 3 series of 16 integers |
 | `host_traffic` | 5 periods, each keyed by MAC; per host `packets_tx`, `bytes_tx`, `packets_rx`, `bytes_rx` (ints) |
 | `dns_v4`, `dns_v6` | list of `{idx, name, ip}` rows (empty on this router) |
 | `port_forwarding` | `portforwardings`: `id`, `enable`, `name`, `privateIP`, `port_rule_id`, `forward_port`, `schedule_rule_id`, `snat_enable`, `snat_id`. `upnpportforwardings`: `ip`, `proto`, `eport`, `iport`. `readonly_portforwardings`: `enable`, `privateIP`, `proto`, `publicPort`, `privatePort`. Plus `portrules` (16 entries), `schedulerules`, `reservePort` (2 ints) |
 | `ipv6_pinholes` | `pinholes` (empty here), `portrules` (16 entries: `id`, `name`, `description`, `used`, `ports`), `schedulerules` |
 | `page:arp` | `data.dump_arp_list` (list of dicts, 32 here); `settings`: `net_name`, `broad_name` |
-| `page:net_connections` | `data`: 15 keys; `settings`: 219 keys (large) |
-| `page:log` | `data`: `szLocalTime`, `cfglogTime`; `settings`: 16 keys. **No log lines**: the entries must come from another page (candidate: `bh_log`) |
+| `page:net_connections` | `data` keys: `eth_status_list`, `get_interface_rate`, `get_ipv6_link_local_addr`, `get_moca_lan_coordinator`, `get_moca_lan_devcie`, `get_moca_state`, `get_wlan_used_5g`, `ipv6_active_rules`, `known_device_list`, `rTable`, `routes6_Table`, `wan_lease_time`, `wan_phy_status`, `wan_state`, `wifi_bh`. `settings`: 219 keys (LAN/DHCP, WAN, IPv6, MoCA, routing table), **including `moca_password0`, `moca_password1` and `moca_manual_pw1`, which `get_router_page` redacts** |
+| `page:log` | `data`: `szLocalTime`, `cfglogTime`; `settings`: 16 firewall logging toggles (`log_all`, `log_in`, `log_out`, `log_syn`, ...). **No log lines**: the entries must come from another page (candidate: `bh_log`) |
 | `page:upnp` | `data` empty; `settings`: `upnp_enable`, `upnp_autoclean`. The live UPnP mappings are in `port_forwarding.upnpportforwardings` |
 | `page:firmware` | `data`: `router_version`, `router_date`, `router_driver`, `router_commit`; `settings` empty |
 
 ### Findings that changed the design
 
-- `get_router_page("log")` does not return log entries. Treat it as time metadata until
-  `bh_log` (or similar) is checked.
-- `get_router_page("upnp")` returns only the enable flags; use `list_port_forwards`, which
+- **Secrets in data pages.** `net_connections.settings` carries MoCA passwords. Every value
+  returned by `get_router_page` passes through `redact()` (`src/cr1000a_mcp/pages.py`), which
+  replaces the value of any secret-named field (`password`, `passwd`, `passphrase`, `psk`,
+  `secret`, `token`, `api_key`, trailing `_pw`/`_pw<n>`) with `[redacted]` and keeps the key.
+  This is why `wifi_*` and `ui_admin` stay off the allowlist: they very likely hold more.
+- `get_router_page("log")` returns only the firewall logging toggles and times, not log
+  entries. Check `bh_log` before promising a log tool.
+- `get_router_page("upnp")` returns only enable flags; use `list_port_forwards`, which
   reports the `upnp_rules`.
-- `net_connections.settings` has 219 keys, so that page is large even with the list cap.
-- Device records have 41 fields; `list_devices` still returns every scalar field per device.
-  Field names are printed by the updated `check` so a curated subset can be chosen.
+- Device records have 41 fields. `list_devices` now returns a 13-field default
+  (`name`, `hostname`, `ip`, `ipv6`, `mac`, `mac_vendor`, `ui_type`, `ui_manufacturer`,
+  `ui_model`, `activity`, `port`, `is_dhcp`, `time_last_active`); use `fields=[...]` for
+  others (for example `user_agent`, `os`, `time_first_seen`) or `verbose=True` for all.
+- `net_connections` is large (219 settings) even with the list cap.
