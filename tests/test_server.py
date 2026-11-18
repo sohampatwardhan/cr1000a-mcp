@@ -193,3 +193,18 @@ async def test_write_is_not_retried() -> None:
                 {"name": "x", "private_ip": "192.168.1.2", "forward_port": 80, "dest_port": 80},
             )
     assert len(logins) == 1
+
+
+async def test_list_devices_is_compact_and_filterable() -> None:
+    server, _, _ = make(False)
+    async with Client(server) as c:
+        result = await c.call_tool("list_devices", {"name_contains": "lap"})
+    assert result.data["matched"] == 1
+    assert result.data["devices"] == [{"hostname": "laptop", "ip": "192.168.1.10"}]
+
+
+async def test_list_port_forwards_is_compact() -> None:
+    server, _, _ = make(False)
+    async with Client(server) as c:
+        result = await c.call_tool("list_port_forwards", {})
+    assert result.data == {"rules": [], "upnp_rules": [], "readonly_rule_count": 0}
