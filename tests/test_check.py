@@ -27,6 +27,23 @@ def test_describe_lists() -> None:
     assert describe([]) == {"list": 0, "item": None}
 
 
+def test_small_dicts_keyed_by_data_are_collapsed_too() -> None:
+    macs = {"aa:bb:cc:dd:ee:01": {"bytes_rx": 1}, "aa:bb:cc:dd:ee:02": {"bytes_rx": 2}}
+    ips = {"192.168.1.10": {"n": 1}}
+    periods = {"3600": {"aa:bb:cc:dd:ee:01": {"bytes_rx": 1}}}
+    names = {"my-laptop": {"n": 1}}
+    for value in (macs, ips, periods, names):
+        dumped = json.dumps(describe(value))
+        assert "aa:bb" not in dumped
+        assert "192.168" not in dumped
+        assert "my-laptop" not in dumped
+        assert "dict_keys" in dumped
+
+
+def test_identifier_style_field_names_are_kept() -> None:
+    assert describe({"packets_tx": 1, "bytesRx": 2}) == {"packets_tx": "int", "bytesRx": "int"}
+
+
 class OkClient:
     def fetch_status(self) -> tuple[dict[str, Any], dict[str, Any]]:
         return {"uptime": "10"}, {}

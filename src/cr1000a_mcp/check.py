@@ -8,12 +8,16 @@ safe to paste into an issue. It never calls a write endpoint.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from typing import Any
 
 from cr1000a_mcp.pages import SAFE_PAGES, fetch_page
 
-MAX_KEYS = 12  # dicts with more keys are summarised (keys may be MAC addresses)
+MAX_KEYS = 12
+# Only keys that look like field names are printed. Data-keyed dicts (MAC or IP
+# addresses, numeric periods, hostnames with dashes or dots) are collapsed.
+_FIELD_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def describe(value: Any, depth: int = 3) -> Any:
@@ -34,8 +38,8 @@ def describe(value: Any, depth: int = 3) -> Any:
         first = describe(value[0], depth - 1) if value else None
         return {"list": len(value), "item": first}
     if isinstance(value, dict):
-        if len(value) > MAX_KEYS:
-            first = describe(next(iter(value.values())), depth - 1)
+        if len(value) > MAX_KEYS or not all(_FIELD_NAME.match(str(k)) for k in value):
+            first = describe(next(iter(value.values())), depth - 1) if value else None
             return {"dict_keys": len(value), "value": first}
         return {str(k): describe(v, depth - 1) for k, v in value.items()}
     return type(value).__name__
