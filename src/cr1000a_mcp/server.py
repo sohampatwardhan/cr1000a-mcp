@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ipaddress
 import os
+import re
 import threading
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -35,21 +36,85 @@ def writes_enabled() -> bool:
 
 
 PASSWORD_ALIAS = "NETWORK_SETTINGS_PASSWORD"
+IP_VARS = ("VZ_ROUTER_IP", "ROUTER_IP")
+_HOSTNAME = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$")
+
+
+def router_url(value: str) -> str:
+    """Turn a router IP or hostname (optionally with a port) into an https URL.
+
+    Accepts ``192.168.1.1``, ``192.168.1.1:8443``, ``router.lan``, ``fe80::1`` or
+    ``[fe80::1]:8443``. The router is always reached over HTTPS: an ``http://``
+    value is rejected so the password is never sent in clear text.
+    """
+    raw = value.strip()
+    if not raw:
+        raise ValueError("router IP must not be empty")
+    if raw.lower().startswith("http://"):
+        raise ValueError("router IP must not use http://; the router is reached over HTTPS")
+    if raw.lower().startswith("https://"):
+        raw = raw[len("https://") :].rstrip("/")
+    if not raw or any(c in raw for c in " \t/@?#\\"):
+        raise ValueError(f"Not a valid router address: {value!r}")
+
+    port = ""
+    if raw.startswith("["):
+        host, sep, rest = raw[1:].partition("]")
+        if not sep or (rest and not rest.startswith(":")):
+            raise ValueError(f"Not a valid router address: {value!r}")
+        try:
+            ipaddress.IPv6Address(host)
+        except ValueError as exc:
+            raise ValueError(f"Not a valid router address: {value!r}") from exc
+        port = rest[1:] if rest else ""
+        host = f"[{host}]"
+    else:
+        try:
+            ipaddress.IPv6Address(raw)  # bare IPv6 literal, no port
+            host = f"[{raw}]"
+        except ValueError:
+            host, _, port = raw.partition(":") if raw.count(":") == 1 else (raw, "", "")
+            if raw.count(":") > 1 or not _HOSTNAME.match(host):
+                raise ValueError(f"Not a valid router address: {value!r}") from None
+    if port and not (port.isdigit() and 1 <= int(port) <= 65535):
+        raise ValueError(f"Not a valid port in router address: {value!r}")
+    return f"https://{host}" + (f":{port}" if port else "")
+
+
+def _lookup(*names: str) -> str | None:
+    """First non-empty value among ``names`` from the environment, then ``.env``."""
+    from dotenv import dotenv_values
+
+    file_values = dotenv_values(".env")
+    for name in names:
+        value = os.environ.get(name) or file_values.get(name)
+        if value:
+            return value
+    return None
 
 
 def load_settings() -> Any:
-    """Router settings from ``VZ_ROUTER_*``, with ``NETWORK_SETTINGS_PASSWORD``
-    (environment, then ``.env``) as a fallback when no password is set."""
-    from dotenv import dotenv_values
+    """Router settings from ``VZ_ROUTER_*`` plus two friendlier aliases.
+
+    - password: ``NETWORK_SETTINGS_PASSWORD`` when ``VZ_ROUTER_PASSWORD`` is empty
+    - address: ``VZ_ROUTER_IP`` or ``ROUTER_IP`` when ``VZ_ROUTER_BASE_URL`` is not set
+
+    Each is read from the environment, then ``.env``.
+    """
     from pydantic import SecretStr
     from verizon_router_client.config import RouterSettings
 
     settings = RouterSettings()
+    update: dict[str, Any] = {}
     if not settings.password.get_secret_value():
-        alias = os.environ.get(PASSWORD_ALIAS) or dotenv_values(".env").get(PASSWORD_ALIAS)
+        alias = _lookup(PASSWORD_ALIAS)
         if alias:
-            settings = settings.model_copy(update={"password": SecretStr(alias)})
-    return settings
+            update["password"] = SecretStr(alias)
+    if "base_url" not in settings.model_fields_set:
+        ip = _lookup(*IP_VARS)
+        if ip:
+            update["base_url"] = router_url(ip)
+    return settings.model_copy(update=update) if update else settings
 
 
 def _default_connect() -> Any:
