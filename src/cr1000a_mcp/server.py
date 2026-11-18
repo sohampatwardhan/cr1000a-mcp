@@ -31,10 +31,28 @@ def writes_enabled() -> bool:
     return os.environ.get(WRITE_ENV, "").strip().lower() in _TRUTHY
 
 
+PASSWORD_ALIAS = "NETWORK_SETTINGS_PASSWORD"
+
+
+def load_settings() -> Any:
+    """Router settings from ``VZ_ROUTER_*``, with ``NETWORK_SETTINGS_PASSWORD``
+    (environment, then ``.env``) as a fallback when no password is set."""
+    from dotenv import dotenv_values
+    from pydantic import SecretStr
+    from verizon_router_client.config import RouterSettings
+
+    settings = RouterSettings()
+    if not settings.password.get_secret_value():
+        alias = os.environ.get(PASSWORD_ALIAS) or dotenv_values(".env").get(PASSWORD_ALIAS)
+        if alias:
+            settings = settings.model_copy(update={"password": SecretStr(alias)})
+    return settings
+
+
 def _default_connect() -> Any:
     from verizon_router_client.config import connect
 
-    return connect()
+    return connect(load_settings())
 
 
 class RouterConnection:

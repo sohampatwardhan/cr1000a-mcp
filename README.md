@@ -31,7 +31,8 @@ Set via environment variables (or a `.env` file in the working directory):
 | --- | --- | --- |
 | `VZ_ROUTER_BASE_URL` | `https://192.168.1.1` | |
 | `VZ_ROUTER_USERNAME` | `admin` | |
-| `VZ_ROUTER_PASSWORD` | _(empty)_ | router admin password |
+| `VZ_ROUTER_PASSWORD` | _(empty)_ | router admin password ("Network Settings Password" on the router's sticker) |
+| `NETWORK_SETTINGS_PASSWORD` | _(unset)_ | alias, used only when `VZ_ROUTER_PASSWORD` is empty; read from the environment or `.env` |
 | `CR1000A_MCP_ALLOW_WRITE` | off | set to `1` to enable write tools |
 
 The router's certificate is bound to `mynetworksettings.com`; the client sets SNI/Host
