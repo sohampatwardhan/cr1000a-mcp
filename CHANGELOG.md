@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-17
+
+### Changed
+
+- README: new project title and a PyPI version badge. No code changes.
+- Verified that the MCPB bundle installs and runs in Claude Desktop on a second computer.
+
 ## [0.3.0] - 2026-11-17
 
 ### Added
@@ -110,7 +117,8 @@ First release, published to PyPI.
 - All read paths against a real CR1000A on firmware 3.6.0.5_BD. The write tools were tested
   with fakes only at this release.
 
-[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.1.0...v0.2.0

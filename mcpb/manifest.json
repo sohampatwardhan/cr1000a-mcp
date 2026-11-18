@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "cr1000a-mcp",
   "display_name": "Verizon CR1000A Router",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "See who is on your Verizon CR1000A (Fios) router, its WAN status, DNS records and port forwards. Optional write tools.",
   "long_description": "Talks to your CR1000A over your local network through the router's own web interface. Read tools: router status, known devices, bandwidth and per-device traffic, DNS records, port forwards, IPv6 pinholes and a few data pages. Write tools (add or remove DNS records, port forwards and IPv6 pinholes) are off until you switch on \"Allow changes\". Secret-looking fields from the router are redacted. Unofficial: it uses the router's undocumented web API, verified on firmware 3.6.0.5_BD.",
   "author": {
