@@ -1,5 +1,7 @@
 # Verizon Fios CR1000A MCP Server
 
+[![PyPI version](https://img.shields.io/pypi/v/cr1000a-mcp)](https://pypi.org/project/cr1000a-mcp/)
+
 An [MCP](https://modelcontextprotocol.io) server for the Verizon CR1000A (Fios) router. Ask
 your AI assistant who is on your network, what your WAN address is, or to add a local DNS
 record.
