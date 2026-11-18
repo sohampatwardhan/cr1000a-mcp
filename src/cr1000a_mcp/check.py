@@ -61,12 +61,44 @@ def _checks() -> dict[str, Callable[[Any], Any]]:
     return checks
 
 
+MAX_NAMES = 300
+FIRMWARE_FIELDS = ("router_version", "router_date")
+
+
+def _field_names(mapping: Any) -> list[str]:
+    """Firmware-defined field names only (identifier-style keys), never data keys."""
+    if not isinstance(mapping, dict):
+        return []
+    names = [str(k) for k in mapping if _FIELD_NAME.match(str(k))]
+    return sorted(names)[:MAX_NAMES]
+
+
+def _extras(name: str, value: Any) -> dict[str, Any]:
+    """Schema names (and the firmware version) that ``describe`` would collapse.
+
+    Field names come from the firmware's own schema. Values are never included,
+    except the firmware version and build date, which are not personal data.
+    """
+    extras: dict[str, Any] = {}
+    if name == "known_devices" and isinstance(value, list) and value:
+        extras["record_fields"] = _field_names(value[0])
+    elif name.startswith("page:") and isinstance(value, dict):
+        extras["data_keys"] = _field_names(value.get("data"))
+        extras["settings_keys"] = _field_names(value.get("settings"))
+        if name == "page:firmware" and isinstance(value.get("data"), dict):
+            extras["firmware"] = {
+                k: value["data"][k] for k in FIRMWARE_FIELDS if k in value["data"]
+            }
+    return extras
+
+
 def run_checks(client: Any) -> dict[str, Any]:
     """Run every read check; failures are recorded, not raised."""
     results: dict[str, Any] = {}
     for name, fn in _checks().items():
         try:
-            results[name] = {"ok": True, "shape": describe(fn(client))}
+            value = fn(client)
+            results[name] = {"ok": True, "shape": describe(value), **_extras(name, value)}
         except Exception as exc:  # report and continue; messages may hold data
             entry: dict[str, Any] = {"ok": False, "error": type(exc).__name__}
             status = getattr(getattr(exc, "response", None), "status_code", None)

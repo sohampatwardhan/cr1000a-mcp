@@ -88,3 +88,30 @@ def test_http_status_is_reported_but_not_the_message() -> None:
 
     entry = run_checks(Forbidden())["results"]["known_devices"]
     assert entry == {"ok": False, "error": "HTTPError", "http_status": 403}
+
+
+def test_extras_report_field_names_and_firmware_but_no_other_values() -> None:
+    from cr1000a_mcp.check import _extras
+
+    devices = [{"hostname": "my-laptop", "mac": "aa:bb", "ip": "192.168.1.5", "conn_type": "wifi"}]
+    out = _extras("known_devices", devices)
+    assert out == {"record_fields": ["conn_type", "hostname", "ip", "mac"]}
+    assert "aa:bb" not in json.dumps(out)
+    assert "laptop" not in json.dumps(out)
+
+    page = {
+        "data": {"router_version": "1.2.3", "router_date": "2026-01-01", "router_commit": "abc123"},
+        "settings": {"net_name": "SecretSSID"},
+    }
+    out = _extras("page:firmware", page)
+    assert out["firmware"] == {"router_version": "1.2.3", "router_date": "2026-01-01"}
+    assert out["data_keys"] == ["router_commit", "router_date", "router_version"]
+    assert out["settings_keys"] == ["net_name"]
+    assert "SecretSSID" not in json.dumps(out)
+    assert "abc123" not in json.dumps(out)
+
+
+def test_data_keyed_mappings_yield_no_field_names() -> None:
+    from cr1000a_mcp.check import _field_names
+
+    assert _field_names({"aa:bb:cc:dd:ee:ff": 1, "192.168.1.5": 2, "my-host": 3}) == []
