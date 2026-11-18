@@ -18,9 +18,14 @@ Read-only (always available):
 | `get_host_traffic` | per-device traffic counters by period |
 | `list_dns_records` | local IPv4 DNS records |
 | `list_port_forwards` | port-forwarding rules |
+| `list_dns_records_v6` | local IPv6 DNS records |
+| `list_ipv6_pinholes` | IPv6 pinhole rules |
+| `get_router_page` | one allowlisted data page: `arp`, `net_connections`, `log`, `upnp`, `firmware` |
 
 Write tools, registered only when `CR1000A_MCP_ALLOW_WRITE=1`:
-`add_dns_record`, `remove_dns_record`, `add_port_forward`, `remove_port_forward`.
+`add_dns_record`, `remove_dns_record`, `remove_dns_record_v6`, `add_port_forward`,
+`remove_port_forward`, `add_ipv6_pinhole`, `remove_ipv6_pinhole`. (Adding IPv6 DNS records is not
+supported by the underlying client.)
 Inputs are validated before the router is contacted, and failed writes are never retried.
 
 ## Configuration

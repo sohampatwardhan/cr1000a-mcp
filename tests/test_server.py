@@ -18,12 +18,17 @@ READ_TOOLS = {
     "list_dns_records",
     "list_port_forwards",
     "get_router_page",
+    "list_dns_records_v6",
+    "list_ipv6_pinholes",
 }
 WRITE_TOOLS = {
     "add_dns_record",
     "remove_dns_record",
     "add_port_forward",
     "remove_port_forward",
+    "remove_dns_record_v6",
+    "add_ipv6_pinhole",
+    "remove_ipv6_pinhole",
 }
 
 
@@ -63,6 +68,23 @@ class FakeClient:
 
     def get_port_forwarding_settings(self) -> dict[str, Any]:
         return {"portforwardings": {}}
+
+    def get_dns_entries_v6(self) -> list[dict[str, Any]]:
+        return [{"idx": 0, "name": "nas6", "ip": "2001:db8::20"}]
+
+    def get_pinhole_settings(self) -> dict[str, Any]:
+        return {"pinholes": [{"id": 5}], "portrules": [], "schedulerules": []}
+
+    def remove_dns_ipv6_by_hostname(self, hostname: str, *, remove_all: bool) -> list[int]:
+        self.calls.append(f"rm_dns6 {hostname} {remove_all}")
+        return [0]
+
+    def add_ipv6_pinhole(self, **kwargs: Any) -> int:
+        self.calls.append(f"add_pinhole {sorted(kwargs.items())}")
+        return 9
+
+    def remove_ipv6_pinhole(self, *, rule_id: int) -> None:
+        self.calls.append(f"rm_pinhole {rule_id}")
 
     def add_dns_ipv4(self, hostname: str, ip: str) -> int:
         self.calls.append(f"add_dns {hostname} {ip}")
@@ -209,3 +231,42 @@ async def test_list_port_forwards_is_compact() -> None:
     async with Client(server) as c:
         result = await c.call_tool("list_port_forwards", {})
     assert result.data == {"rules": [], "upnp_rules": [], "readonly_rule_count": 0}
+
+
+async def test_ipv6_reads() -> None:
+    server, _, _ = make(False)
+    async with Client(server) as c:
+        dns = await c.call_tool("list_dns_records_v6", {})
+        holes = await c.call_tool("list_ipv6_pinholes", {})
+    assert dns.data == [{"idx": 0, "name": "nas6", "ip": "2001:db8::20"}]
+    assert holes.data == {"pinholes": [{"id": 5}]}
+
+
+async def test_ipv6_writes() -> None:
+    server, fake, _ = make(True)
+    async with Client(server) as c:
+        added = await c.call_tool(
+            "add_ipv6_pinhole", {"private_ip": "2001:db8::10", "dest_port": 443, "protocol": "TCP"}
+        )
+        removed = await c.call_tool("remove_ipv6_pinhole", {"rule_id": 9})
+        dns = await c.call_tool("remove_dns_record_v6", {"hostname": "nas6"})
+    assert added.data == {"rule_id": 9}
+    assert removed.data == {"removed_rule_id": 9}
+    assert dns.data == {"removed_slots": [0]}
+    assert "('protocol', 'tcp')" in fake.calls[0]
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {"private_ip": "192.168.1.5", "dest_port": 443},  # IPv4 rejected
+        {"private_ip": "2001:db8::10", "dest_port": 70000},
+        {"private_ip": "2001:db8::10", "dest_port": 443, "protocol": "icmp"},
+    ],
+)
+async def test_invalid_pinhole_input_rejected_before_router_call(args: dict[str, Any]) -> None:
+    server, fake, _ = make(True)
+    async with Client(server) as c:
+        with pytest.raises(ToolError):
+            await c.call_tool("add_ipv6_pinhole", args)
+    assert fake.calls == []

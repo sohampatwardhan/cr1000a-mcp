@@ -95,6 +95,13 @@ def _valid_ipv4(value: str) -> str:
         raise ValueError(f"Not a valid IPv4 address: {value!r}") from exc
 
 
+def _valid_ipv6(value: str) -> str:
+    try:
+        return str(ipaddress.IPv6Address(value))
+    except ValueError as exc:
+        raise ValueError(f"Not a valid IPv6 address: {value!r}") from exc
+
+
 def _valid_port(value: int, label: str) -> int:
     if not 1 <= value <= 65535:
         raise ValueError(f"{label} must be between 1 and 65535, got {value}")
@@ -174,6 +181,16 @@ def build_server(
         return compact_port_forwards(settings, include_readonly=include_readonly)
 
     @mcp.tool(annotations=READ)
+    def list_dns_records_v6() -> list[dict[str, Any]]:
+        """Local IPv6 DNS records as ``{idx, name, ip}`` rows."""
+        return conn.call(lambda c: c.get_dns_entries_v6())
+
+    @mcp.tool(annotations=READ)
+    def list_ipv6_pinholes() -> dict[str, Any]:
+        """Configured IPv6 pinhole (inbound firewall) rules."""
+        return {"pinholes": conn.call(lambda c: c.get_pinhole_settings()["pinholes"])}
+
+    @mcp.tool(annotations=READ)
     def get_router_page(page: PageName, limit: int = DEFAULT_ITEM_LIMIT) -> dict[str, Any]:
         """Read one allowlisted router data page: arp (ARP table), net_connections,
         log, upnp or firmware (version info). Long lists are truncated to ``limit``.
@@ -236,6 +253,39 @@ def build_server(
     def remove_port_forward(rule_id: int) -> dict[str, Any]:
         """Delete the port-forward rule with the given id (see list_port_forwards)."""
         conn.call(lambda c: c.remove_port_forward(rule_id=rule_id), retry=False)
+        return {"removed_rule_id": rule_id}
+
+    @mcp.tool(annotations=DELETE)
+    def remove_dns_record_v6(hostname: str, remove_all: bool = False) -> dict[str, Any]:
+        """Remove the local IPv6 DNS record for ``hostname`` (first match unless
+        ``remove_all``). Returns the cleared slots."""
+        removed = conn.call(
+            lambda c: c.remove_dns_ipv6_by_hostname(hostname, remove_all=remove_all),
+            retry=False,
+        )
+        return {"removed_slots": removed}
+
+    @mcp.tool(annotations=WRITE)
+    def add_ipv6_pinhole(private_ip: str, dest_port: int, protocol: str = "both") -> dict[str, Any]:
+        """Open an inbound IPv6 pinhole to ``private_ip`` on ``dest_port``.
+        ``protocol`` is tcp, udp or both. Returns the rule id."""
+        protocol = protocol.lower()
+        if protocol not in {"tcp", "udp", "both"}:
+            raise ValueError("protocol must be tcp, udp or both")
+        private_ip = _valid_ipv6(private_ip)
+        _valid_port(dest_port, "dest_port")
+        rule_id = conn.call(
+            lambda c: c.add_ipv6_pinhole(
+                private_ip=private_ip, dest_port=dest_port, protocol=protocol
+            ),
+            retry=False,
+        )
+        return {"rule_id": rule_id}
+
+    @mcp.tool(annotations=DELETE)
+    def remove_ipv6_pinhole(rule_id: int) -> dict[str, Any]:
+        """Delete the IPv6 pinhole with the given id (see list_ipv6_pinholes)."""
+        conn.call(lambda c: c.remove_ipv6_pinhole(rule_id=rule_id), retry=False)
         return {"removed_rule_id": rule_id}
 
     return mcp
