@@ -101,6 +101,6 @@ Verified with `cr1000a-mcp write-test` on a real CR1000A, firmware 3.6.0.5_BD, 2
 | Tool | Endpoint | Status |
 | --- | --- | --- |
 | `add_dns_record`, `remove_dns_record` | `apply_abstract.cgi` (`dnsmasq_reload`) | verified live |
-| `add_port_forward`, `remove_port_forward` | `db.cgi` (`forwardrule`) | not verified; covered by `write-test --port-forward` |
+| `add_port_forward`, `remove_port_forward` | `db.cgi` (`forwardrule`) | verified live (`write-test --port-forward`) |
 | `remove_dns_record_v6` | `apply_abstract.cgi` | not verified (the client cannot add IPv6 records, so there is no round trip to test) |
 | `add_ipv6_pinhole`, `remove_ipv6_pinhole` | `db.cgi` (`pinholerule`) | not verified; no live test yet |

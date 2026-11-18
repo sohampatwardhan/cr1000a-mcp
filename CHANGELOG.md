@@ -6,12 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-17
+
 ### Verified
 
-- `add_dns_record` and `remove_dns_record` (IPv4) passed the live `cr1000a-mcp write-test` on a
-  real CR1000A running firmware 3.6.0.5_BD (2026-11-17): the record appeared in
-  `list_dns_records`, was removed, and the router was left clean. Port forwards, IPv6 DNS
-  removal and IPv6 pinholes are not yet verified live.
+- `add_dns_record`, `remove_dns_record`, `add_port_forward` and `remove_port_forward` passed
+  the live `cr1000a-mcp write-test --port-forward` on a real CR1000A running firmware
+  3.6.0.5_BD: each entry appeared in the list output, was removed, and the router was left
+  clean. `remove_dns_record_v6` and the IPv6 pinhole tools are not yet verified live.
+
+### Changed
+
+- README and `docs/endpoints.md` state exactly which write tools are verified. This is the
+  description shown on PyPI.
 
 ## [0.2.0] - 2026-11-17
 
@@ -81,6 +88,7 @@ First release, published to PyPI.
 - All read paths against a real CR1000A on firmware 3.6.0.5_BD. The write tools were tested
   with fakes only at this release.
 
-[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sohampatwardhan/cr1000a-mcp/releases/tag/v0.1.0

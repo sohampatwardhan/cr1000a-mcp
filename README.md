@@ -131,9 +131,10 @@ only one admin session.
 
 - Unofficial: a firmware update can change the endpoints. Run `check` after updating.
 - Logging in may end an active web-UI session on the router.
-- Only firmware 3.6.0.5_BD has been verified: all read tools, and the IPv4 DNS write tools
-  (`add_dns_record`, `remove_dns_record`). The port-forward and IPv6 write tools have not been
-  tried on a real router yet; `write-test --port-forward` covers port forwards.
+- Only firmware 3.6.0.5_BD has been verified: all read tools and the DNS and port-forward
+  write tools (`add_dns_record`, `remove_dns_record`, `add_port_forward`,
+  `remove_port_forward`). `remove_dns_record_v6` and the IPv6 pinhole tools have not been
+  tried on a real router yet.
 
 ## Changelog and contributing
 
