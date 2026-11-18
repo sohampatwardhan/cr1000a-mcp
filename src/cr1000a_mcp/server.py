@@ -291,5 +291,21 @@ def build_server(
     return mcp
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(prog="cr1000a-mcp", description=__doc__.split("\n")[0])
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=["check"],
+        help="'check' runs every read-only call against the router and prints a shape report; "
+        "with no command the MCP server starts on stdio",
+    )
+    args = parser.parse_args(argv)
+    if args.command == "check":
+        from cr1000a_mcp.check import main as check_main
+
+        sys.exit(check_main())
     build_server().run()
