@@ -21,6 +21,8 @@ import requests
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
+from cr1000a_mcp.shape import DEFAULT_LIMIT, compact_devices, compact_port_forwards
+
 T = TypeVar("T")
 
 WRITE_ENV = "CR1000A_MCP_ALLOW_WRITE"
@@ -130,9 +132,16 @@ def build_server(
         return conn.call(run)
 
     @mcp.tool(annotations=READ)
-    def list_devices() -> list[dict[str, Any]]:
-        """Devices the router knows about (connected and previously seen)."""
-        return conn.call(lambda c: c.fetch_known_devices())
+    def list_devices(
+        name_contains: str = "", limit: int = DEFAULT_LIMIT, verbose: bool = False
+    ) -> dict[str, Any]:
+        """Devices the router knows about (connected and previously seen).
+
+        ``name_contains`` filters case-insensitively on any field (hostname, IP,
+        MAC). Results are capped at ``limit``; ``verbose`` returns raw records.
+        """
+        devices = conn.call(lambda c: c.fetch_known_devices())
+        return compact_devices(devices, name_contains=name_contains, limit=limit, verbose=verbose)
 
     @mcp.tool(annotations=READ)
     def get_bandwidth_history() -> list[list[int]]:
@@ -154,9 +163,14 @@ def build_server(
         return conn.call(lambda c: c.get_dns_entries_v4())
 
     @mcp.tool(annotations=READ)
-    def list_port_forwards() -> dict[str, Any]:
-        """Configured port-forwarding rules."""
-        return conn.call(lambda c: c.get_port_forwarding_settings())
+    def list_port_forwards(include_readonly: bool = False) -> dict[str, Any]:
+        """Configured port-forwarding rules (user rules and UPnP rules).
+
+        Firmware-reserved read-only rules are only counted unless
+        ``include_readonly`` is true.
+        """
+        settings = conn.call(lambda c: c.get_port_forwarding_settings())
+        return compact_port_forwards(settings, include_readonly=include_readonly)
 
     if not write:
         return mcp
