@@ -34,7 +34,8 @@ Set via environment variables (or a `.env` file in the working directory):
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VZ_ROUTER_BASE_URL` | `https://192.168.1.1` | |
+| `VZ_ROUTER_BASE_URL` | `https://192.168.1.1` | full URL; wins over the IP variables below |
+| `VZ_ROUTER_IP` | _(unset)_ | router IP or hostname, optionally `:port` (for example `192.168.1.1`); HTTPS is added. Alias: `ROUTER_IP`. `http://` is rejected |
 | `VZ_ROUTER_USERNAME` | `admin` | |
 | `VZ_ROUTER_PASSWORD` | _(empty)_ | router admin password ("Network Settings Password" on the router's sticker) |
 | `NETWORK_SETTINGS_PASSWORD` | _(unset)_ | alias, used only when `VZ_ROUTER_PASSWORD` is empty; read from the environment or `.env` |
