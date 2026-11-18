@@ -1,6 +1,6 @@
 [project]
 name = "cr1000a-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP server for the Verizon CR1000A (Fios) router"
 readme = "README.md"
 license = "MIT"
@@ -27,6 +27,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/sohampatwardhan/cr1000a-mcp"
 Issues = "https://github.com/sohampatwardhan/cr1000a-mcp/issues"
+Changelog = "https://github.com/sohampatwardhan/cr1000a-mcp/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/sohampatwardhan/cr1000a-mcp/blob/main/docs/endpoints.md"
 
 [project.scripts]
 cr1000a-mcp = "cr1000a_mcp:main"
