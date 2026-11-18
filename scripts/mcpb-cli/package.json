@@ -1,0 +1,9 @@
+{
+  "name": "cr1000a-mcpb-cli",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pins the official mcpb CLI used by scripts/build_mcpb.py; installed with npm ci so the lockfile hashes are verified.",
+  "dependencies": {
+    "@anthropic-ai/mcpb": "2.1.2"
+  }
+}
