@@ -16,7 +16,8 @@ You need [`uv`](https://docs.astral.sh/uv/) and your router's **Network Settings
 (printed on the router's sticker).
 
 ```bash
-# 1. Put your settings in a .env file (or export them)
+# 1. Put your settings in a .env file (or export them). Plain text is the least secure
+#    option; on macOS see "Keep the password out of plain-text files" below.
 cat > .env <<'EOF'
 ROUTER_IP=192.168.1.1
 NETWORK_SETTINGS_PASSWORD=the-password-from-the-sticker
@@ -58,6 +59,81 @@ claude mcp add cr1000a \
 ```
 
 The server is read-only until you also set `CR1000A_MCP_ALLOW_WRITE=1` (see below).
+
+## Keep the password out of plain-text files (macOS)
+
+The setup above puts the Network Settings Password in plain text in a `.env` file, in
+`~/.claude.json` (what `claude mcp add --env` writes) or in `claude_desktop_config.json`. AI
+agents read those files routinely, so the password can end up in an agent's context, its
+transcripts or a pasted bug report. Those options are the simplest but the **least secure**.
+On macOS you can keep the password in the Keychain and start the server through a small
+launcher that reads it at startup. (Suggested in
+[#39](https://github.com/sohampatwardhan/cr1000a-mcp/issues/39).)
+
+**1. Save the password.** With `-w` and no value it prompts, so the password never appears on
+screen or in shell history:
+
+```bash
+security add-generic-password -s cr1000a-mcp -a admin -w
+```
+
+**2. Create a launcher**, for example `~/.local/bin/cr1000a-mcp-launch`, then run
+`chmod 755 ~/.local/bin/cr1000a-mcp-launch`:
+
+```zsh
+#!/bin/zsh
+# Claude Desktop starts with a minimal PATH; add the usual uv locations.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+pw=$(/usr/bin/security find-generic-password -s cr1000a-mcp -a admin -w 2>/dev/null)
+if [[ -z "$pw" ]]; then
+  echo "cr1000a-mcp: no Keychain item 'cr1000a-mcp'. Run: security add-generic-password -s cr1000a-mcp -a admin -w" >&2
+  exit 1
+fi
+export NETWORK_SETTINGS_PASSWORD="$pw"
+export ROUTER_IP="${ROUTER_IP:-192.168.1.1}"
+exec uvx cr1000a-mcp "$@"
+```
+
+If `uvx` lives somewhere else (`which uvx`), add that directory to `PATH` in the script.
+
+**3. Point your client at the launcher.** No secret goes into either config:
+
+```bash
+claude mcp add -s user cr1000a -- ~/.local/bin/cr1000a-mcp-launch
+```
+
+```json
+{
+  "mcpServers": {
+    "cr1000a": { "command": "/Users/<you>/.local/bin/cr1000a-mcp-launch" }
+  }
+}
+```
+
+**4. Check it.** The launcher passes arguments through, so this runs the read-only check:
+
+```bash
+~/.local/bin/cr1000a-mcp-launch check
+```
+
+**What this does not protect against.** The Keychain keeps the password out of files, client
+config and chat, but not from an agent with unrestricted shell access as your user:
+
+- A Keychain item created with the `security` command trusts `security`, so
+  `security find-generic-password -s cr1000a-mcp -w` prints the password with no prompt. In
+  Claude Code, deny that command in `~/.claude/settings.json`:
+
+  ```json
+  { "permissions": { "deny": ["Bash(security find-generic-password:*)"] } }
+  ```
+
+  Other agents have their own ways to restrict shell commands.
+- The password is an environment variable of the running server, so other processes running
+  as your user can read it (for example with `ps -E`).
+
+Linux (`secret-tool`) and Windows (Credential Manager) could get the same treatment later.
+Reading the Keychain inside the server itself, so the password never sits in an environment
+variable, is a possible future option.
 
 ## Configuration
 

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- README section for macOS users on keeping the password in the Keychain behind a launcher
+  script, with the limits stated (shell access can still read it; deny rule for Claude Code),
+  and a note that plain-text `.env`/config setups are the less secure choice. Suggested in #39.
+
 ## [0.2.1] - 2026-11-17
 
 ### Verified
