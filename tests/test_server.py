@@ -55,7 +55,33 @@ class FakeClient:
         )
 
     def fetch_known_devices(self) -> list[dict[str, Any]]:
-        return [{"hostname": "laptop", "ip": "192.168.1.10"}]
+        return [
+            {"hostname": "laptop", "ip": "192.168.1.10", "mac": "AA:BB:CC:00:00:01"},
+            {"hostname": "printer", "ip": "192.168.1.11", "mac": "AA:BB:CC:00:00:02"},
+        ]
+
+    stations_error: Exception | None = None
+
+    def _get(self, path: str) -> Any:
+        if self.stations_error:
+            raise self.stations_error
+        return type("Resp", (), {"text": path})()
+
+    def _parse_addrod(self, text: str) -> dict[str, Any]:
+        return {
+            "dump_toplogy_station_info": {
+                "stations": [
+                    {
+                        "station_mac": "aa:bb:cc:00:00:01",
+                        "connect_type": "5G",
+                        "mode": "11",
+                        "bandwidth": "3",
+                        "max_rx_phy_rate": "1201Mbps",
+                        "max_tx_phy_rate": "1201Mbps",
+                    }
+                ]
+            }
+        }
 
     def get_bandwidth_history_rates(self) -> list[list[int]]:
         return [[1, 2, 3]]
@@ -223,7 +249,50 @@ async def test_list_devices_is_compact_and_filterable() -> None:
     async with Client(server) as c:
         result = await c.call_tool("list_devices", {"name_contains": "lap"})
     assert result.data["matched"] == 1
-    assert result.data["devices"] == [{"hostname": "laptop", "ip": "192.168.1.10"}]
+    assert result.data["devices"] == [
+        {
+            "hostname": "laptop",
+            "ip": "192.168.1.10",
+            "mac": "AA:BB:CC:00:00:01",
+            "band": "5G",
+            "phy_mode": "802.11ax (Wi-Fi 6)",
+        }
+    ]
+
+
+async def test_list_devices_offline_device_has_no_phy_fields() -> None:
+    server, _, _ = make(False)
+    async with Client(server) as c:
+        result = await c.call_tool("list_devices", {"name_contains": "printer"})
+    assert result.data["devices"][0] == {
+        "hostname": "printer",
+        "ip": "192.168.1.11",
+        "mac": "AA:BB:CC:00:00:02",
+    }
+
+
+async def test_list_devices_extra_phy_fields_via_fields() -> None:
+    server, _, _ = make(False)
+    async with Client(server) as c:
+        result = await c.call_tool(
+            "list_devices",
+            {
+                "name_contains": "laptop",
+                "fields": ["phy_mode_code", "channel_width_mhz", "max_phy_rate_mbps"],
+            },
+        )
+    assert result.data["devices"] == [
+        {"phy_mode_code": "11", "channel_width_mhz": 80, "max_phy_rate_mbps": 1201}
+    ]
+
+
+async def test_list_devices_survives_station_fetch_failure() -> None:
+    server, fake, _ = make(False)
+    fake.stations_error = requests.ConnectionError("down")
+    async with Client(server) as c:
+        result = await c.call_tool("list_devices", {"name_contains": "laptop"})
+    assert result.data["devices"][0]["hostname"] == "laptop"
+    assert "phy_mode" not in result.data["devices"][0]
 
 
 async def test_list_port_forwards_is_compact() -> None:

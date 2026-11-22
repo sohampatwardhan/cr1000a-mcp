@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `list_devices` now shows `band` (2.4G, 5G, 6G or Ether) and `phy_mode` (for example
+  "802.11ax (Wi-Fi 6)") for devices that are connected. Ask for `phy_mode_code`, `channel`,
+  `channel_width_mhz`, `max_phy_rate_mbps`, `link_rate_mbps` or `tx_link_rate_mbps` with
+  `fields`. The data comes from the router's station list; if that fetch fails the device list
+  is still returned without these fields.
+
 ## [0.3.1] - 2026-11-17
 
 ### Changed
