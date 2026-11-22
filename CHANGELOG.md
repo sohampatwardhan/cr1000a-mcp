@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-22
+
 ### Added
 
 - `list_devices` now shows `band` (2.4G, 5G, 6G or Ether) and `phy_mode` (for example
@@ -125,7 +127,8 @@ First release, published to PyPI.
 - All read paths against a real CR1000A on firmware 3.6.0.5_BD. The write tools were tested
   with fakes only at this release.
 
-[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/sohampatwardhan/cr1000a-mcp/compare/v0.2.0...v0.2.1
