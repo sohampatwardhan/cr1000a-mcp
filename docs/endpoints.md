@@ -77,6 +77,34 @@ names only (no values). Counts are from one household and will vary. Recorded na
 | `page:upnp` | `data` empty; `settings`: `upnp_enable`, `upnp_autoclean`. The live UPnP mappings are in `port_forwarding.upnpportforwardings` |
 | `page:firmware` | `data`: `router_version`, `router_date`, `router_driver`, `router_commit`; `settings` empty |
 
+### Station records (PHY mode)
+
+`cgi_owl.js` (and `cgi_basic.js`) carry `dump_toplogy_station_info` (sic), whose `stations`
+list has one record per associated device. Verified live on 2026-11-22, firmware 3.6.0.5_BD.
+Fields: `airtime_util`, `alias_name`, `ant_r_num`, `ant_s_num`, `ant_t_num`, `ap_ant_rssi`,
+`as`, `assoc_time`, `bandwidth`, `br`, `bs`, `channel`, `connect_bssid`, `connect_intf`,
+`connect_type`, `es`, `frc`, `ipv6_ip`, `last_connect`, `lddr`, `ldur`, `link_rate`,
+`link_rate_max`, `max_rx_phy_rate`, `max_tx_phy_rate`, `mode`, `mrc`, `node_id`, `note`,
+`online`, `parent_id`, `parent_mac`, `pid`, `rc`, `rt`, `rtc`, `rxc`, `rxmo`, `rxmo_max`,
+`signal_strength`, `signal_strength_max`, `signal_strength_min`, `snr`, `spl_airtime`,
+`spl_ap_ant_rssi`, `spl_rx_rate`, `spl_tx_rate`, `station_ip`, `station_mac`, `station_name`,
+`tx_link_rate`, `tx_link_rate_max`, `txc`, `txmo`, `txmo_max`, `txop`. Join to known devices on
+`station_mac` = `mac`.
+
+The router does not label `mode` or `bandwidth`. Decoded by comparing with band and maximum PHY
+rate (`src/cr1000a_mcp/stations.py`):
+
+| `mode` | Seen on | Max PHY rates seen | Decoded as |
+| --- | --- | --- | --- |
+| `0` | Ether | 100 Mbps | wired |
+| `5` | 2.4G | 72-260 Mbps | 802.11n |
+| `7` | 5G, 20 MHz | 65-72 Mbps | 802.11n |
+| `8` | 5G, 80 MHz | 866, 1300 Mbps | 802.11ac |
+| `11` | 2.4G, 5G, 6G | 143-2401 Mbps | 802.11ax (6E on 6G) |
+
+`bandwidth`: `0` = 20 MHz, `3` = 80 MHz, `5` = 160 MHz. Other codes are reported as unknown.
+Note that `ha-verizonFiOS` counts mode `7` as Wi-Fi 5, which this data contradicts.
+
 ### Findings that changed the design
 
 - **Secrets in data pages.** `net_connections.settings` carries MoCA passwords. Every value

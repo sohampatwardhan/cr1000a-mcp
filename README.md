@@ -174,7 +174,7 @@ Read-only (always available):
 | Tool | Returns |
 | --- | --- |
 | `router_status` | uptime, WAN IPv4/IPv6, WAN DNS servers |
-| `list_devices` | known devices. Default is 13 fields per device; options `name_contains`, `limit`, `fields`, `verbose` |
+| `list_devices` | known devices. Default is 13 fields per device, plus `band` and `phy_mode` (802.11n/ac/ax) for connected ones; options `name_contains`, `limit`, `fields`, `verbose` |
 | `get_bandwidth_history` | recent WAN throughput series |
 | `get_host_traffic` | per-device traffic counters by period |
 | `list_dns_records` / `list_dns_records_v6` | local DNS records |

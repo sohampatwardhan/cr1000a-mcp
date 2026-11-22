@@ -23,7 +23,13 @@ from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 from cr1000a_mcp.pages import DEFAULT_ITEM_LIMIT, PageName, fetch_page
-from cr1000a_mcp.shape import DEFAULT_LIMIT, compact_devices, compact_port_forwards
+from cr1000a_mcp.shape import (
+    DEFAULT_DEVICE_FIELDS,
+    DEFAULT_LIMIT,
+    compact_devices,
+    compact_port_forwards,
+)
+from cr1000a_mcp.stations import DEFAULT_STATION_FIELDS, attach_phy, fetch_stations
 
 T = TypeVar("T")
 
@@ -219,10 +225,24 @@ def build_server(
         ui_model, activity, port, is_dhcp, time_last_active); pass ``fields`` to choose
         others (the router returns 41, for example ``user_agent``, ``os``,
         ``time_first_seen``) or ``verbose`` for everything.
+
+        Devices currently associated also carry ``band`` (2.4G, 5G, 6G or Ether) and
+        ``phy_mode`` (for example "802.11ax (Wi-Fi 6)"). More are available through
+        ``fields``: ``phy_mode_code``, ``channel``, ``channel_width_mhz``,
+        ``max_phy_rate_mbps``, ``link_rate_mbps``, ``tx_link_rate_mbps``. Offline devices
+        have none of these.
         """
         devices = conn.call(lambda c: c.fetch_known_devices())
+        try:
+            devices = attach_phy(devices, conn.call(fetch_stations))
+        except (requests.RequestException, RuntimeError):
+            pass  # PHY data is a bonus; the device list itself still works
         return compact_devices(
-            devices, name_contains=name_contains, limit=limit, verbose=verbose, fields=fields
+            devices,
+            name_contains=name_contains,
+            limit=limit,
+            verbose=verbose,
+            fields=fields or DEFAULT_DEVICE_FIELDS + DEFAULT_STATION_FIELDS,
         )
 
     @mcp.tool(annotations=READ)
