@@ -1,6 +1,6 @@
 [project]
 name = "cr1000a-mcp"
-version = "0.3.1"
+version = "0.4.0"
 description = "MCP server for the Verizon CR1000A (Fios) router"
 readme = "README.md"
 license = "MIT"
